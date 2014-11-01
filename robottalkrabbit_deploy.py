@@ -21,6 +21,7 @@ cmPerSecond = 100/4.5
 json_data=open('/usr/local/sbin/config.json')
 config = json.load(json_data)
 json_data.close()
+raspividSubProcess
 
 print(config["amqp_pw"])
 
@@ -53,9 +54,13 @@ def turn(degrees, direction):
 	print('turn')
 def stream():
 	print('starting stream...')
-        process = subprocess.Popen(['/usr/local/sbin/raspi2ffmpeg.sh'])
+        raspividSubProcess  = subprocess.Popen(['/usr/local/sbin/raspi2ffmpeg.sh',, preexec_fn=os.setsid])
         sleep(10)
 	print('subprocess opened')
+def streamoff():
+	print('stream stopping...')
+        os.killpg(raspividSubProcess.pid, signal.SIGTERM)
+	print('subprocess stopped')
 #read from queue
 logging.basicConfig()
 creds = pika.PlainCredentials('pmvpkimx',config["amqp_pw"])
@@ -79,6 +84,9 @@ def callback(ch,method,properties,body):
         elif str(command) == 'stream':
 	        print('***calling stream***')	
                 stream()
+  	elif str(command) == 'streamoff':
+		print('***calling stream OFF***')
+		streamoff()
 
 channel.basic_consume(callback,queue='tilt',no_ack=True)
 channel.start_consuming()
