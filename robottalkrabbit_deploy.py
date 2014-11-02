@@ -7,6 +7,7 @@ import os
 import pika
 import logging
 import subprocess
+import signal
 
 #configuraiton
 leftServoId = 1
@@ -21,16 +22,12 @@ cmPerSecond = 100/4.5
 json_data=open('/usr/local/sbin/config.json')
 config = json.load(json_data)
 json_data.close()
-raspividSubProcess
+raspividSubProcess = None
 
 print(config["amqp_pw"])
 
 #functions
 def call_command(servo, pulsewidth):
-	#f = open('/dev/servoblaster','w')
-	#f.write(str(servo)+'='+str(pulsewidth))
-	#f.close()
-	#os.system('echo 1=150 > /dev/servoblaster')
 	command = 'echo ' + str(servo) + '=' + str(pulsewidth) + ' > /dev/servoblaster'
 	os.system(command)
 	print(command)
@@ -54,11 +51,13 @@ def turn(degrees, direction):
 	print('turn')
 def stream():
 	print('starting stream...')
-        raspividSubProcess  = subprocess.Popen(['/usr/local/sbin/raspi2ffmpeg.sh',, preexec_fn=os.setsid])
-        sleep(10)
+	global raspividSubProcess
+        raspividSubProcess  = subprocess.Popen('/usr/local/sbin/raspi2ffmpeg.sh',stdout=subprocess.PIPE,shell=True,  preexec_fn=os.setsid)
+        print(raspividSubProcess.pid)
 	print('subprocess opened')
 def streamoff():
 	print('stream stopping...')
+        print(raspividSubProcess.pid)
         os.killpg(raspividSubProcess.pid, signal.SIGTERM)
 	print('subprocess stopped')
 #read from queue
